@@ -474,46 +474,6 @@ export class GmailManager {
     }
   }
 
-  /**
-   * Send an email message
-   */
-  async sendMessage(to: string, subject: string, body: string, sender?: string): Promise<string | null> {
-    if (!this.gmail) throw new Error("Gmail API not initialized");
-
-    try {
-      // Create email content
-      const email = [
-        `To: ${to}`,
-        `Subject: ${subject}`,
-        sender ? `From: ${sender}` : '',
-        '',
-        body,
-      ].filter(line => line !== '').join('\n');
-
-      // Encode in base64url
-      const encodedEmail = btoa(email)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-
-      const message = await this.gmail.users.messages.send({
-        userId: 'me',
-        requestBody: {
-          raw: encodedEmail,
-        },
-      });
-
-      const messageId = message.data.id;
-      if (messageId) {
-        console.log(`✓ Message sent with ID: ${messageId}`);
-        return messageId;
-      }
-      return null;
-    } catch (error) {
-      console.error(`Error sending message: ${error}`);
-      return null;
-    }
-  }
 
   /**
    * Get all Gmail labels
@@ -592,45 +552,7 @@ export class GmailManager {
     }
   }
 
-  /**
-   * Delete a message permanently
-   */
-  async deleteMessage(messageId: string): Promise<boolean> {
-    if (!this.gmail) throw new Error("Gmail API not initialized");
 
-    try {
-      await this.gmail.users.messages.delete({
-        userId: 'me',
-        id: messageId,
-      });
-
-      console.log(`✓ Message ${messageId} deleted permanently`);
-      return true;
-    } catch (error) {
-      console.error(`Error deleting message: ${error}`);
-      return false;
-    }
-  }
-
-  /**
-   * Move message to trash
-   */
-  async trashMessage(messageId: string): Promise<boolean> {
-    if (!this.gmail) throw new Error("Gmail API not initialized");
-
-    try {
-      await this.gmail.users.messages.trash({
-        userId: 'me',
-        id: messageId,
-      });
-
-      console.log(`✓ Message ${messageId} moved to trash`);
-      return true;
-    } catch (error) {
-      console.error(`Error moving message to trash: ${error}`);
-      return false;
-    }
-  }
 }
 
 /**
@@ -710,13 +632,6 @@ async function main() {
           await gmail.createDraft(args[1], args[2], args[3]);
           break;
           
-        case 'send':
-          if (args.length < 4) {
-            console.error("Usage: send <to> <subject> <body>");
-            Deno.exit(1);
-          }
-          await gmail.sendMessage(args[1], args[2], args[3]);
-          break;
           
         case 'labels':
           const allLabels = await gmail.listLabels();
@@ -733,16 +648,15 @@ Usage: deno run --allow-all gmail_manager.ts [command] [args]
 Commands:
   list [query] [limit]     - List messages (default: 10 recent)
   read <messageId>         - Read full message content
-  archive <messageId>      - Archive a message
+  archive <messageId>      - Archive a message (move out of inbox)
   draft <to> <subject> <body> - Create a draft
-  send <to> <subject> <body>  - Send an email
   labels                   - List all labels
   help                     - Show this help
 
 Examples:
   deno run --allow-all gmail_manager.ts list "is:unread" 5
   deno run --allow-all gmail_manager.ts read "18abc123def"
-  deno run --allow-all gmail_manager.ts send "user@example.com" "Hello" "This is a test"
+  deno run --allow-all gmail_manager.ts archive "18abc123def"
           `);
           break;
       }
