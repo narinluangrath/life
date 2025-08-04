@@ -10,7 +10,8 @@ interface GroupedMessages {
   senderEmail: string;
   count: number;
   unreadCount: number;
-  messages: Array<{
+  allMessageIds: string[];  // Store ALL message IDs
+  messages: Array<{         // Keep preview messages
     id: string;
     subject: string;
     snippet: string;
@@ -24,16 +25,31 @@ async function main() {
   const gmail = new GmailManager('./credentials.json', './token.json');
   await gmail.initialize();
 
-  // Start with a manageable batch
-  console.log("Fetching recent inbox messages...");
-  const messages = await gmail.searchMessages("label:INBOX", 50);
+  // Fetch inbox messages with progress feedback
+  console.log("Fetching inbox messages...");
+  
+  // Add some user feedback during the fetch
+  let dots = 0;
+  const progressTimer = setInterval(() => {
+    dots++;
+    process.stdout.write(".");
+    if (dots % 10 === 0) {
+      console.log(` (${dots}s)`);
+    }
+  }, 1000);
+  
+  // Fetch all inbox messages at once but with timeout feedback
+  const messages = await gmail.searchMessages("label:INBOX", 60);
+  
+  clearInterval(progressTimer);
+  if (dots > 0) console.log(); // New line after dots
   
   if (messages.length === 0) {
     console.log("✨ Your inbox is empty!");
     return;
   }
 
-  console.log(`\nFound ${messages.length} recent messages\n`);
+  console.log(`\nTotal: ${messages.length} messages fetched\n`);
 
   // Group by sender
   const grouped = new Map<string, GroupedMessages>();
@@ -49,12 +65,15 @@ async function main() {
         senderEmail: email,
         count: 0,
         unreadCount: 0,
+        allMessageIds: [],
         messages: []
       });
     }
     
     const group = grouped.get(email)!;
     group.count++;
+    group.allMessageIds.push(msg.id);  // Store ALL message IDs
+    
     if (msg.labels.includes("UNREAD")) {
       group.unreadCount++;
     }
@@ -165,21 +184,14 @@ async function processGroup(
   
   switch (choice) {
     case 'a':
-      console.log("\nFetching all messages from this sender...");
-      // Get ALL messages from this sender in inbox
-      const allFromSender = await gmail.searchMessages(
-        `label:INBOX from:${group.senderEmail}`, 
-        100
-      );
-      
-      console.log(`Archiving ${allFromSender.length} messages...`);
+      console.log(`\nArchiving ${group.allMessageIds.length} messages...`);
       let archived = 0;
-      for (const msg of allFromSender) {
-        if (await gmail.archiveMessage(msg.id)) {
+      for (const messageId of group.allMessageIds) {
+        if (await gmail.archiveMessage(messageId)) {
           archived++;
           // Show progress every 5 messages
           if (archived % 5 === 0) {
-            console.log(`  Archived ${archived}/${allFromSender.length}...`);
+            console.log(`  Archived ${archived}/${group.allMessageIds.length}...`);
           }
         }
       }
