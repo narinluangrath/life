@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "gmail": "deno run --allow-all gmail_manager.ts"
+    "gmail": "./gmail"
   },
   "imports": {
     "@googleapis/gmail": "npm:googleapis@^128.0.0",

@@ -1,0 +1,260 @@
+#!/usr/bin/env -S deno run --allow-all
+/**
+ * Gmail CLI - GitHub CLI style interface for Gmail
+ * Usage: ./gmail <command> [options]
+ */
+
+import { GmailManager } from "./gmail_manager.ts";
+
+const COMMANDS = {
+  ls: "List messages",
+  read: "Read a message",
+  archive: "Archive a message",
+  draft: "Create a draft",
+  search: "Search messages",
+  unread: "List unread messages",
+  labels: "List labels",
+  help: "Show help",
+};
+
+async function main() {
+  const args = Deno.args;
+  const command = args[0] || "help";
+
+  try {
+    const gmail = new GmailManager('./credentials.json', './token.json');
+    await gmail.initialize();
+
+    switch (command) {
+      case "ls":
+      case "list":
+        await listMessages(gmail, args.slice(1));
+        break;
+
+      case "read":
+      case "show":
+        await readMessage(gmail, args[1]);
+        break;
+
+      case "archive":
+        await archiveMessage(gmail, args[1]);
+        break;
+
+      case "draft":
+        await createDraft(gmail, args.slice(1));
+        break;
+
+      case "search":
+        await searchMessages(gmail, args.slice(1));
+        break;
+
+      case "unread":
+        await listUnread(gmail, args.slice(1));
+        break;
+
+      case "labels":
+        await listLabels(gmail);
+        break;
+
+      case "help":
+      case "-h":
+      case "--help":
+        showHelp();
+        break;
+
+      default:
+        console.error(`Unknown command: ${command}`);
+        showHelp();
+        Deno.exit(1);
+    }
+  } catch (error) {
+    if (error.message?.includes("No token found")) {
+      console.log("\n⚠️  First time setup required");
+      console.log("Run: ./gmail ls");
+      console.log("This will guide you through authentication\n");
+    } else {
+      console.error(`Error: ${error.message}`);
+    }
+    Deno.exit(1);
+  }
+}
+
+async function listMessages(gmail: GmailManager, args: string[]) {
+  const limit = parseInt(args[0] || "10");
+  const messages = await gmail.getMessages("", limit);
+  
+  if (messages.length === 0) {
+    console.log("No messages found");
+    return;
+  }
+
+  console.log("\n📧 Recent Messages\n");
+  for (const msg of messages) {
+    const from = msg.sender.replace(/<.*>/, "").trim();
+    const isUnread = msg.labels.includes("UNREAD");
+    const icon = isUnread ? "🔵" : "⚪";
+    
+    console.log(`${icon} ${msg.subject}`);
+    console.log(`   From: ${from}`);
+    console.log(`   ID: ${msg.id}`);
+    console.log(`   ${msg.snippet.substring(0, 80)}...`);
+    console.log();
+  }
+}
+
+async function readMessage(gmail: GmailManager, messageId: string) {
+  if (!messageId) {
+    console.error("Message ID required");
+    console.log("Usage: ./gmail read <message-id>");
+    Deno.exit(1);
+  }
+
+  const message = await gmail.getMessageContent(messageId);
+  if (!message) {
+    console.error("Message not found");
+    Deno.exit(1);
+  }
+
+  console.log("\n" + "=".repeat(60));
+  console.log(`Subject: ${message.subject}`);
+  console.log(`From: ${message.sender}`);
+  console.log(`Date: ${message.date}`);
+  console.log("=".repeat(60) + "\n");
+  console.log(message.body || "(No text content)");
+  console.log("\n" + "=".repeat(60));
+  
+  // Mark as read
+  await gmail.markAsRead(messageId);
+}
+
+async function archiveMessage(gmail: GmailManager, messageId: string) {
+  if (!messageId) {
+    console.error("Message ID required");
+    console.log("Usage: ./gmail archive <message-id>");
+    Deno.exit(1);
+  }
+
+  const success = await gmail.archiveMessage(messageId);
+  if (success) {
+    console.log("✅ Message archived successfully");
+  } else {
+    console.error("Failed to archive message");
+    Deno.exit(1);
+  }
+}
+
+async function createDraft(gmail: GmailManager, args: string[]) {
+  if (args.length < 3) {
+    console.error("Invalid arguments");
+    console.log("Usage: ./gmail draft <to> <subject> <body>");
+    Deno.exit(1);
+  }
+
+  const [to, subject, ...bodyParts] = args;
+  const body = bodyParts.join(" ");
+
+  const draftId = await gmail.createDraft(to, subject, body);
+  if (draftId) {
+    console.log("✅ Draft created successfully");
+    console.log(`Draft ID: ${draftId}`);
+  } else {
+    console.error("Failed to create draft");
+    Deno.exit(1);
+  }
+}
+
+async function searchMessages(gmail: GmailManager, args: string[]) {
+  const query = args.join(" ") || "";
+  const messages = await gmail.searchMessages(query, 20);
+  
+  if (messages.length === 0) {
+    console.log(`No messages found for query: "${query}"`);
+    return;
+  }
+
+  console.log(`\n🔍 Search Results for: "${query}"\n`);
+  for (const msg of messages) {
+    const from = msg.sender.replace(/<.*>/, "").trim();
+    const isUnread = msg.labels.includes("UNREAD");
+    const icon = isUnread ? "🔵" : "⚪";
+    
+    console.log(`${icon} ${msg.subject}`);
+    console.log(`   From: ${from}`);
+    console.log(`   ID: ${msg.id}`);
+    console.log();
+  }
+}
+
+async function listUnread(gmail: GmailManager, args: string[]) {
+  const limit = parseInt(args[0] || "20");
+  const messages = await gmail.searchMessages("is:unread", limit);
+  
+  if (messages.length === 0) {
+    console.log("✨ No unread messages!");
+    return;
+  }
+
+  console.log(`\n📬 Unread Messages (${messages.length})\n`);
+  for (const msg of messages) {
+    const from = msg.sender.replace(/<.*>/, "").trim();
+    
+    console.log(`🔵 ${msg.subject}`);
+    console.log(`   From: ${from}`);
+    console.log(`   ID: ${msg.id}`);
+    console.log(`   ${msg.snippet.substring(0, 80)}...`);
+    console.log();
+  }
+}
+
+async function listLabels(gmail: GmailManager) {
+  const labels = await gmail.listLabels();
+  
+  console.log("\n🏷️  Gmail Labels\n");
+  for (const label of labels) {
+    if (label.name && !label.name.startsWith("CATEGORY_")) {
+      console.log(`  • ${label.name}`);
+    }
+  }
+}
+
+function showHelp() {
+  console.log(`
+Gmail CLI - GitHub-style interface for Gmail
+
+Usage: ./gmail <command> [options]
+
+Commands:
+  ls, list [count]        List recent messages (default: 10)
+  read <id>               Read a specific message
+  archive <id>            Archive a message
+  draft <to> <sub> <body> Create a draft email
+  search <query>          Search messages
+  unread [count]          List unread messages
+  labels                  List Gmail labels
+  help                    Show this help
+
+Examples:
+  ./gmail ls              List 10 recent messages
+  ./gmail ls 20           List 20 recent messages
+  ./gmail unread          Show unread messages
+  ./gmail read <id>       Read message with given ID
+  ./gmail archive <id>    Archive message
+  ./gmail search "from:github.com"  Search messages
+
+Search Query Examples:
+  is:unread              Unread messages
+  from:user@example.com  Messages from specific sender
+  subject:meeting        Messages with 'meeting' in subject
+  has:attachment         Messages with attachments
+  after:2024/1/1         Messages after date
+  label:important        Important messages
+
+First Time Setup:
+  The first time you run any command, you'll be prompted to authenticate.
+  Choose option 1 (manual) for SSH access.
+`);
+}
+
+if (import.meta.main) {
+  main();
+}
