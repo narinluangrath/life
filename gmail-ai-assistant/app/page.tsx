@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { EmailGroup as AIEmailGroup, ParsedMessage } from '@/lib/types';
+import EmailGroupWithActions from '@/components/EmailGroupWithActions';
 
 interface Email {
   id: string;
@@ -159,6 +161,30 @@ export default function HomePage() {
     setExpandedGroups(newExpanded);
   };
 
+  // Convert Email[] to AIEmailGroup format for AI actions
+  const convertToAIEmailGroup = (group: EmailGroup): AIEmailGroup => {
+    const messages: ParsedMessage[] = group.emails.map(email => ({
+      id: email.id,
+      subject: email.subject,
+      sender: email.sender,
+      senderEmail: email.senderEmail,
+      date: email.date,
+      snippet: email.snippet,
+      labels: [] // We don't have labels in current format
+    }));
+
+    return {
+      senderKey: group.senderEmail,
+      senderName: group.sender,
+      senderEmail: group.senderEmail,
+      relatedEmails: [group.senderEmail],
+      messages,
+      totalCount: group.emails.length,
+      unreadCount: 0, // We don't track unread in current format
+      latestDate: group.emails[0]?.date || new Date().toISOString()
+    };
+  };
+
   if (loading) {
     return (
       <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
@@ -278,98 +304,112 @@ export default function HomePage() {
           <p>No emails found in your inbox.</p>
         ) : (
           <div style={{ marginTop: '1rem' }}>
-            {groupEmails(emails).map((group) => (
-              <div key={group.senderEmail} style={{ marginBottom: '1rem' }}>
-                {groupBy !== 'none' && (
-                  <div 
-                    onClick={() => toggleGroup(group.senderEmail)}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#e9ecef',
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '0.5rem'
-                    }}
-                  >
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#333' }}>
-                        {groupBy === 'sender' ? group.sender : group.sender}
-                      </h3>
-                      <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
-                        {group.emails.length} email{group.emails.length !== 1 ? 's' : ''}
-                        {groupBy === 'sender' && ` (${group.senderEmail})`}
-                      </p>
-                    </div>
-                    <span style={{ fontSize: '1.2rem', color: '#666' }}>
-                      {group.isExpanded ? '▼' : '▶'}
-                    </span>
-                  </div>
-                )}
-                
-                {(groupBy === 'none' || group.isExpanded) && (
-                  <div style={{ marginLeft: groupBy !== 'none' ? '1rem' : '0' }}>
-                    {group.emails.map((email) => (
+            {groupBy === 'sender' ? (
+              // Use AI-enabled components for sender grouping
+              <div className="space-y-4">
+                {groupEmails(emails).map((group) => (
+                  <EmailGroupWithActions
+                    key={group.senderEmail}
+                    emailGroup={convertToAIEmailGroup(group)}
+                    isExpanded={group.isExpanded}
+                    onToggleExpanded={() => toggleGroup(group.senderEmail)}
+                  />
+                ))}
+              </div>
+            ) : (
+              // Fall back to original display for other grouping modes
+              <div>
+                {groupEmails(emails).map((group) => (
+                  <div key={group.senderEmail} style={{ marginBottom: '1rem' }}>
+                    {groupBy !== 'none' && (
                       <div 
-                        key={email.id} 
+                        onClick={() => toggleGroup(group.senderEmail)}
                         style={{
+                          padding: '0.75rem 1rem',
+                          backgroundColor: '#e9ecef',
                           border: '1px solid #ddd',
                           borderRadius: '8px',
-                          padding: '1rem',
-                          marginBottom: '0.5rem',
-                          backgroundColor: '#f9f9f9'
+                          cursor: 'pointer',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '0.5rem'
                         }}
                       >
-                        <div style={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
-                          alignItems: 'flex-start',
-                          marginBottom: '0.5rem'
-                        }}>
-                          <div style={{ flex: 1 }}>
-                            <h4 style={{ 
-                              margin: '0 0 0.25rem 0', 
-                              fontSize: '1rem',
-                              color: '#333'
-                            }}>
-                              {email.subject}
-                            </h4>
-                            {groupBy !== 'sender' && (
-                              <p style={{ 
-                                margin: '0', 
-                                fontSize: '0.85rem', 
-                                color: '#666' 
-                              }}>
-                                From: {email.sender} ({email.senderEmail})
-                              </p>
-                            )}
-                          </div>
-                          <span style={{ 
-                            fontSize: '0.8rem', 
-                            color: '#888',
-                            whiteSpace: 'nowrap',
-                            marginLeft: '1rem'
-                          }}>
-                            {formatDate(email.date)}
-                          </span>
+                        <div>
+                          <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#333' }}>
+                            {group.sender}
+                          </h3>
+                          <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
+                            {group.emails.length} email{group.emails.length !== 1 ? 's' : ''}
+                          </p>
                         </div>
-                        <p style={{ 
-                          margin: '0.5rem 0 0 0', 
-                          fontSize: '0.85rem', 
-                          color: '#555',
-                          fontStyle: 'italic'
-                        }}>
-                          {email.snippet}
-                        </p>
+                        <span style={{ fontSize: '1.2rem', color: '#666' }}>
+                          {group.isExpanded ? '▼' : '▶'}
+                        </span>
                       </div>
-                    ))}
+                    )}
+                    
+                    {(groupBy === 'none' || group.isExpanded) && (
+                      <div style={{ marginLeft: groupBy !== 'none' ? '1rem' : '0' }}>
+                        {group.emails.map((email) => (
+                          <div 
+                            key={email.id} 
+                            style={{
+                              border: '1px solid #ddd',
+                              borderRadius: '8px',
+                              padding: '1rem',
+                              marginBottom: '0.5rem',
+                              backgroundColor: '#f9f9f9'
+                            }}
+                          >
+                            <div style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'flex-start',
+                              marginBottom: '0.5rem'
+                            }}>
+                              <div style={{ flex: 1 }}>
+                                <h4 style={{ 
+                                  margin: '0 0 0.25rem 0', 
+                                  fontSize: '1rem',
+                                  color: '#333'
+                                }}>
+                                  {email.subject}
+                                </h4>
+                                <p style={{ 
+                                  margin: '0', 
+                                  fontSize: '0.85rem', 
+                                  color: '#666' 
+                                }}>
+                                  From: {email.sender} ({email.senderEmail})
+                                </p>
+                              </div>
+                              <span style={{ 
+                                fontSize: '0.8rem', 
+                                color: '#888',
+                                whiteSpace: 'nowrap',
+                                marginLeft: '1rem'
+                              }}>
+                                {formatDate(email.date)}
+                              </span>
+                            </div>
+                            <p style={{ 
+                              margin: '0.5rem 0 0 0', 
+                              fontSize: '0.85rem', 
+                              color: '#555',
+                              fontStyle: 'italic'
+                            }}>
+                              {email.snippet}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
         

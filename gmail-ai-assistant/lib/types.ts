@@ -45,6 +45,54 @@ export interface EmailAnalysis {
   reasoning?: string;
 }
 
+// Action execution result
+export interface ActionResult {
+  success: boolean;
+  message: string;
+  details?: any;
+  error?: string;
+}
+
+// Specific action parameter types
+export interface CalendarEventParams {
+  title: string;
+  date: string;
+  time?: string;
+  duration?: string;
+  description?: string;
+  location?: string;
+}
+
+export interface TaskParams {
+  title: string;
+  description?: string;
+  priority?: 'low' | 'medium' | 'high';
+  dueDate?: string;
+  project?: string;
+}
+
+export interface DriveParams {
+  filename: string;
+  folder?: string;
+  format?: 'pdf' | 'docx' | 'txt';
+  content?: string;
+}
+
+export interface CustomActionParams {
+  apiEndpoint?: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  headers?: Record<string, string>;
+  body?: any;
+}
+
+// UI state for actions
+export interface ActionUIState {
+  isAnalyzing: boolean;
+  isExecuting: boolean;
+  expandedGroups: Set<string>;
+  selectedActions: Set<string>;
+}
+
 export interface GoogleCredentials {
   installed: {
     client_id: string;
