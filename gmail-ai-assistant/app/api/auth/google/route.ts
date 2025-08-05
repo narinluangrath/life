@@ -15,6 +15,7 @@ export async function GET() {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 10, // 10 minutes
+      // Don't set domain for development - let it default to current host
     });
     
     return response;

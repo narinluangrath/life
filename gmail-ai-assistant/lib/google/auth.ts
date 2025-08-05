@@ -1,12 +1,12 @@
-import { OAuth2Client } from 'google-auth-library';
-import { getGoogleOAuthConfig } from './config';
+import { Credentials, OAuth2Client } from "google-auth-library";
+import { getGoogleOAuthConfig } from "./config";
 
 // Scopes needed for Gmail, Calendar, and Drive
 export const SCOPES = [
-  'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/gmail.modify',
-  'https://www.googleapis.com/auth/calendar',
-  'https://www.googleapis.com/auth/drive.file',
+  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/gmail.modify",
+  "https://www.googleapis.com/auth/calendar",
+  "https://www.googleapis.com/auth/drive.file",
 ];
 
 export function createOAuth2Client() {
@@ -14,16 +14,17 @@ export function createOAuth2Client() {
   return new OAuth2Client(
     config.clientId,
     config.clientSecret,
-    config.redirectUri
+    config.redirectUri,
   );
 }
 
 export function getAuthUrl(state?: string) {
   const oauth2Client = createOAuth2Client();
   return oauth2Client.generateAuthUrl({
-    access_type: 'offline',
+    access_type: "offline",
     scope: SCOPES,
     state,
+    prompt: "consent", // Force consent screen to get refresh token
   });
 }
 
@@ -33,7 +34,7 @@ export async function getTokensFromCode(code: string) {
   return tokens;
 }
 
-export function createAuthenticatedClient(tokens: any) {
+export function createAuthenticatedClient(tokens: Credentials) {
   const oauth2Client = createOAuth2Client();
   oauth2Client.setCredentials(tokens);
   return oauth2Client;

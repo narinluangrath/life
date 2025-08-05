@@ -21,8 +21,8 @@ export function getGoogleCredentials(): GoogleCredentials {
 export function getGoogleOAuthConfig() {
   const creds = getGoogleCredentials();
   return {
-    clientId: creds.installed.client_id,
-    clientSecret: creds.installed.client_secret,
+    clientId: creds.web.client_id,
+    clientSecret: creds.web.client_secret,
     redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/auth/google/callback',
   };
 }
