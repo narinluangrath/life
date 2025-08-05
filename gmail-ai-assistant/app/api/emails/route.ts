@@ -51,15 +51,50 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     console.log('Gmail API success:', { messageCount: data.messages?.length || 0 });
     
-    // Convert to simple format for now (we can enhance this later)
-    const emails = (data.messages || []).slice(0, 20).map((msg: any, index: number) => ({
-      id: msg.id,
-      subject: `Email ${index + 1}`,
-      sender: 'Gmail User',
-      senderEmail: 'user@gmail.com',  
-      date: new Date().toISOString(),
-      snippet: `Message ID: ${msg.id}`
-    }));
+    // Fetch detailed information for each email
+    const emailDetails = await Promise.all(
+      (data.messages || []).slice(0, 10).map(async (msg: any) => {
+        try {
+          const detailResponse = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
+            headers: {
+              'Authorization': `Bearer ${tokens.access_token}`,
+              'Accept': 'application/json'
+            }
+          });
+
+          if (!detailResponse.ok) {
+            console.error(`Failed to fetch email ${msg.id}:`, detailResponse.status);
+            return null;
+          }
+
+          const detail = await detailResponse.json();
+          const headers = detail.payload?.headers || [];
+          
+          // Extract email information from headers
+          const getHeader = (name: string) => headers.find((h: any) => h.name === name)?.value || '';
+          
+          const fromHeader = getHeader('From');
+          const emailMatch = fromHeader.match(/<(.+?)>/);
+          const senderEmail = emailMatch ? emailMatch[1] : fromHeader;
+          const senderName = fromHeader.replace(/<.*>/, '').trim() || senderEmail;
+
+          return {
+            id: msg.id,
+            subject: getHeader('Subject') || 'No Subject',
+            sender: senderName,
+            senderEmail: senderEmail,
+            date: getHeader('Date') || new Date().toISOString(),
+            snippet: detail.snippet || 'No preview available'
+          };
+        } catch (error) {
+          console.error(`Error fetching email ${msg.id}:`, error);
+          return null;
+        }
+      })
+    );
+
+    // Filter out failed requests
+    const emails = emailDetails.filter(email => email !== null);
     
     return NextResponse.json({ emails });
   } catch (error) {
