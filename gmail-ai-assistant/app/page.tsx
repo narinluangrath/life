@@ -163,7 +163,22 @@ export default function HomePage() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>Gmail AI Assistant</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h1>Gmail AI Assistant</h1>
+        <a
+          href="/api/auth/logout"
+          style={{
+            padding: '0.5rem 1rem',
+            fontSize: '0.9rem',
+            backgroundColor: '#dc3545',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '4px',
+          }}
+        >
+          Logout
+        </a>
+      </div>
       <p>✅ Successfully connected to Gmail! Here are your recent emails:</p>
       
       <div style={{ marginTop: '2rem' }}>
