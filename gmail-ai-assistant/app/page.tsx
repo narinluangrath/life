@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { EmailGroup as AIEmailGroup, ParsedMessage } from '@/lib/types';
-import EmailGroupWithActions from '@/components/EmailGroupWithActions';
+import { useAIActions } from '@/lib/hooks/useAIActions';
+import ActionSuggestions from '@/components/ActionSuggestions';
 
 interface Email {
   id: string;
@@ -27,6 +28,15 @@ export default function HomePage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [groupBy, setGroupBy] = useState<'none' | 'sender' | 'date'>('sender');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [showActionsFor, setShowActionsFor] = useState<string | null>(null);
+  
+  const {
+    analyzeEmailGroup,
+    executeAction,
+    getAnalysis,
+    isGroupAnalyzing,
+    getAnalysisError
+  } = useAIActions();
 
   useEffect(() => {
     // Check for OAuth errors in URL params
@@ -185,6 +195,19 @@ export default function HomePage() {
     };
   };
 
+  const handleAnalyze = async (group: EmailGroup) => {
+    const aiGroup = convertToAIEmailGroup(group);
+    const result = await analyzeEmailGroup(aiGroup);
+    if (result) {
+      setShowActionsFor(group.senderEmail);
+    }
+  };
+
+  const handleExecuteAction = async (action: any, group: EmailGroup) => {
+    const aiGroup = convertToAIEmailGroup(group);
+    return executeAction(action, aiGroup);
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -261,62 +284,127 @@ export default function HomePage() {
           </div>
         ) : (
           <div style={{ marginTop: '1rem' }}>
-            {groupBy === 'sender' ? (
-              // Use AI-enabled components for sender grouping
-              <div className="space-y-4">
-                {groupEmails(emails).map((group) => (
-                  <EmailGroupWithActions
-                    key={group.senderEmail}
-                    emailGroup={convertToAIEmailGroup(group)}
-                    isExpanded={group.isExpanded}
-                    onToggleExpanded={() => toggleGroup(group.senderEmail)}
-                  />
-                ))}
-              </div>
-            ) : (
-              // Fall back to original display for other grouping modes
-              <div>
-                {groupEmails(emails).map((group) => (
-                  <div key={group.senderEmail} style={{ marginBottom: '1rem' }}>
-                    {groupBy !== 'none' && (
+            {groupEmails(emails).map((group) => {
+              const analysis = getAnalysis(group.senderEmail);
+              const isAnalyzing = isGroupAnalyzing(group.senderEmail);
+              const analysisError = getAnalysisError(group.senderEmail);
+              
+              return (
+                <div key={group.senderEmail} style={{ marginBottom: '1rem' }}>
+                  {groupBy !== 'none' && (
+                    <div className="group-header">
                       <div 
                         onClick={() => toggleGroup(group.senderEmail)}
-                        className="group-header"
+                        className="group-info"
+                        style={{ cursor: 'pointer', flex: 1 }}
                       >
-                        <div className="group-info">
-                          <h3 className="group-title">{group.sender}</h3>
-                          <p className="group-count">
-                            {group.emails.length} email{group.emails.length !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                        <span className={`group-chevron ${group.isExpanded ? 'expanded' : ''}`}>
+                        <h3 className="group-title">{group.sender}</h3>
+                        <p className="group-count">
+                          {group.emails.length} email{group.emails.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        {groupBy === 'sender' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAnalyze(group);
+                            }}
+                            disabled={isAnalyzing}
+                            className={isAnalyzing ? 'btn-secondary' : analysis ? 'btn-success' : 'btn-primary'}
+                            style={{ fontSize: '0.8125rem', padding: '0.5rem 1rem' }}
+                          >
+                            {isAnalyzing ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span className="spinner" style={{ width: '1rem', height: '1rem', borderWidth: '2px' }}></span>
+                                Analyzing...
+                              </span>
+                            ) : analysis ? (
+                              '🤖 View AI Actions'
+                            ) : (
+                              '🤖 Analyze with AI'
+                            )}
+                          </button>
+                        )}
+                        <span 
+                          onClick={() => toggleGroup(group.senderEmail)}
+                          className={`group-chevron ${group.isExpanded ? 'expanded' : ''}`}
+                          style={{ cursor: 'pointer' }}
+                        >
                           ▶
                         </span>
                       </div>
-                    )}
-                    
-                    {(groupBy === 'none' || group.isExpanded) && (
-                      <div className={groupBy !== 'none' ? 'group-content' : ''}>
-                        {group.emails.map((email) => (
-                          <div key={email.id} className="email-card">
-                            <div className="email-header">
-                              <div style={{ flex: 1 }}>
-                                <h4 className="email-subject">{email.subject}</h4>
-                                <p className="email-sender">
-                                  {email.sender} <span style={{ color: 'var(--text-tertiary)' }}>({email.senderEmail})</span>
-                                </p>
-                              </div>
-                              <span className="email-date">{formatDate(email.date)}</span>
+                    </div>
+                  )}
+                
+                  {(groupBy === 'none' || group.isExpanded) && (
+                    <div className={groupBy !== 'none' ? 'group-content' : ''}>
+                      {group.emails.map((email) => (
+                        <div key={email.id} className="email-card">
+                          <div className="email-header">
+                            <div style={{ flex: 1 }}>
+                              <h4 className="email-subject">{email.subject}</h4>
+                              <p className="email-sender">
+                                {email.sender} <span style={{ color: 'var(--text-tertiary)' }}>({email.senderEmail})</span>
+                              </p>
                             </div>
-                            <p className="email-snippet">{email.snippet}</p>
+                            <span className="email-date">{formatDate(email.date)}</span>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                          <p className="email-snippet">{email.snippet}</p>
+                        </div>
+                      ))}
+                      
+                      {/* AI Actions Section */}
+                      {groupBy === 'sender' && (analysis || isAnalyzing || analysisError) && (
+                        <div style={{ 
+                          marginTop: '1rem', 
+                          padding: '1rem', 
+                          background: 'var(--bg-secondary)', 
+                          borderRadius: 'var(--radius)',
+                          border: '1px solid var(--border-light)'
+                        }}>
+                          {isAnalyzing && (
+                            <div style={{ textAlign: 'center', color: 'var(--primary)' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                <span className="spinner" style={{ width: '1.25rem', height: '1.25rem' }}></span>
+                                AI is analyzing these emails...
+                              </div>
+                            </div>
+                          )}
+                          
+                          {analysisError && (
+                            <div style={{ 
+                              background: '#fef2f2', 
+                              border: '1px solid #fecaca', 
+                              borderRadius: 'var(--radius)', 
+                              padding: '0.75rem',
+                              color: '#991b1b'
+                            }}>
+                              <div>❌ Analysis failed: {analysisError}</div>
+                              <button
+                                onClick={() => handleAnalyze(group)}
+                                className="btn-text"
+                                style={{ marginTop: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.8125rem' }}
+                              >
+                                Try again
+                              </button>
+                            </div>
+                          )}
+                          
+                          {analysis && showActionsFor === group.senderEmail && (
+                            <ActionSuggestions
+                              emailGroup={convertToAIEmailGroup(group)}
+                              suggestions={analysis.suggestions}
+                              onExecuteAction={(action) => handleExecuteAction(action, group)}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
         
