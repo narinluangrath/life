@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ActionSuggestion } from '@/lib/types';
+import { createCalendarEvent, parseEmailForEventDetails } from '@/lib/google/calendar';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,6 +8,12 @@ export async function POST(request: NextRequest) {
       action: ActionSuggestion; 
       emailIds: string[];
     } = await request.json();
+
+    console.log('Action execute request:', {
+      actionType: action?.type,
+      actionParams: action?.params,
+      emailCount: emailIds?.length
+    });
 
     if (!action || !emailIds?.length) {
       return NextResponse.json(
@@ -17,7 +24,10 @@ export async function POST(request: NextRequest) {
 
     const result = await executeAction(action, emailIds, request);
     
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      debug: result.debug || []
+    });
   } catch (error) {
     console.error('Action execution error:', error);
     return NextResponse.json(
@@ -33,7 +43,7 @@ async function executeAction(action: ActionSuggestion, emailIds: string[], reque
       return await archiveEmails(emailIds, request);
     
     case 'calendar':
-      return await createCalendarEvent(action.params);
+      return await handleCalendarEvent(action.params, request);
     
     case 'drive':
       return await saveToDrive(action.params, emailIds);
@@ -87,13 +97,68 @@ async function archiveEmails(emailIds: string[], request: NextRequest) {
   };
 }
 
-async function createCalendarEvent(params: any) {
-  // Placeholder for calendar integration
-  return {
-    success: true,
-    message: `Calendar event suggestion: ${params.title}`,
-    details: params
-  };
+async function handleCalendarEvent(params: any, request: NextRequest) {
+  const debugLog: string[] = [];
+  
+  try {
+    debugLog.push(`Calendar event params: ${JSON.stringify(params)}`);
+    
+    // Get access token
+    const accessToken = await getAccessToken(request);
+    debugLog.push(`Got access token: ${!!accessToken ? 'YES' : 'NO'}`);
+    
+    // Prepare event data with smart defaults
+    const eventData = {
+      title: params.eventTitle || params.title || 'Event from Email',
+      date: params.eventDate || params.date || (() => {
+        // Default to tomorrow at 9 AM
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(9, 0, 0, 0);
+        return tomorrow.toISOString();
+      })(),
+      description: params.description || 'Event created from Gmail emails',
+      attendees: params.attendees || [],
+      duration: params.duration || 30 // 30 minutes default
+    };
+    
+    debugLog.push(`Event data: ${JSON.stringify(eventData)}`);
+    
+    // Create the actual calendar event
+    const result = await createCalendarEvent(accessToken, eventData);
+    debugLog.push(`Calendar API call successful: ${result.success}`);
+    
+    return {
+      success: true,
+      message: `✅ Calendar event created: "${eventData.title}"`,
+      details: {
+        ...result,
+        eventUrl: result.htmlLink,
+        eventId: result.eventId
+      },
+      debug: debugLog
+    };
+  } catch (error: any) {
+    debugLog.push(`Calendar creation error: ${error.message}`);
+    debugLog.push(`Error stack: ${error.stack?.substring(0, 200)}`);
+    
+    // Check if it's an auth error
+    if (error.message?.includes('401') || error.message?.includes('403')) {
+      return {
+        success: false,
+        message: '⚠️ Calendar access not authorized. Please re-authenticate with Calendar permissions.',
+        error: 'Missing calendar permissions. You may need to log out and log in again to grant calendar access.',
+        debug: debugLog
+      };
+    }
+    
+    return {
+      success: false,
+      message: `Failed to create calendar event: ${error.message}`,
+      error: error.message,
+      debug: debugLog
+    };
+  }
 }
 
 async function saveToDrive(params: any, emailIds: string[]) {

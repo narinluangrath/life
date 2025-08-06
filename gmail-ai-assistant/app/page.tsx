@@ -29,6 +29,8 @@ export default function HomePage() {
   const [groupBy, setGroupBy] = useState<'none' | 'sender' | 'date'>('sender');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [showActionsFor, setShowActionsFor] = useState<string | null>(null);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
   
   const {
     analyzeEmailGroup,
@@ -203,9 +205,32 @@ export default function HomePage() {
     }
   };
 
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setDebugLogs(prev => [...prev.slice(-9), `${timestamp}: ${message}`]);
+  };
+
   const handleExecuteAction = async (action: any, group: EmailGroup) => {
+    addDebugLog(`Starting action: ${action.type} - ${action.title}`);
     const aiGroup = convertToAIEmailGroup(group);
-    return executeAction(action, aiGroup);
+    
+    try {
+      const result = await executeAction(action, aiGroup);
+      addDebugLog(`Action result: ${result.success ? 'SUCCESS' : 'FAILED'} - ${result.message}`);
+      
+      // Display server debug logs
+      if (result.debug && Array.isArray(result.debug)) {
+        result.debug.forEach((log: string) => addDebugLog(`[SERVER] ${log}`));
+      }
+      
+      if (result.error) {
+        addDebugLog(`Error details: ${result.error}`);
+      }
+      return result;
+    } catch (error) {
+      addDebugLog(`Action exception: ${error}`);
+      throw error;
+    }
   };
 
   if (loading) {
@@ -408,13 +433,146 @@ export default function HomePage() {
           </div>
         )}
         
-        <button 
-          onClick={checkAuthAndFetchEmails}
-          className="btn-success"
-          style={{ marginTop: '1.5rem' }}
-        >
-          Refresh Emails
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <button 
+            onClick={checkAuthAndFetchEmails}
+            className="btn-success"
+          >
+            Refresh Emails
+          </button>
+          <button
+            onClick={async () => {
+              const res = await fetch('/api/auth/debug');
+              const data = await res.json();
+              addDebugLog(`Permissions check: Calendar=${data.requiredScopes?.calendar ? '✅' : '❌'} Gmail=${data.requiredScopes?.gmail_modify ? '✅' : '❌'}`);
+              if (data.debug?.allScopes) {
+                addDebugLog(`Scopes: ${data.debug.allScopes.join(', ')}`);
+              }
+              setShowDebug(true);
+            }}
+            className="btn-secondary"
+          >
+            Check Permissions
+          </button>
+          <button
+            onClick={() => setShowDebug(!showDebug)}
+            className="btn-text"
+          >
+            {showDebug ? 'Hide' : 'Show'} Debug
+          </button>
+        </div>
+        
+        {/* Spacer for debug panel when showing */}
+        {showDebug && <div style={{ height: '35vh' }}></div>}
+        
+        {/* Debug Panel */}
+        {showDebug && (
+          <div style={{
+            position: 'fixed',
+            bottom: '0',
+            left: '0',
+            right: '0',
+            height: '35vh',
+            background: '#1e1e1e',
+            color: '#d4d4d4',
+            padding: '1rem',
+            fontFamily: 'monospace',
+            fontSize: '0.75rem',
+            zIndex: 1000,
+            border: '1px solid var(--border)',
+            borderRadius: '8px 8px 0 0',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '0.5rem',
+              color: '#569cd6',
+              fontWeight: 'bold',
+              flexShrink: 0
+            }}>
+              Debug Log
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(debugLogs.join('\n'));
+                      // Show temporary feedback
+                      const btn = event?.target as HTMLButtonElement;
+                      if (btn) {
+                        const originalText = btn.textContent;
+                        btn.textContent = 'Copied!';
+                        btn.style.background = '#2d5a2d';
+                        setTimeout(() => {
+                          btn.textContent = originalText;
+                          btn.style.background = 'transparent';
+                        }, 1000);
+                      }
+                    } catch (err) {
+                      // Fallback for older browsers
+                      const textArea = document.createElement('textarea');
+                      textArea.value = debugLogs.join('\n');
+                      document.body.appendChild(textArea);
+                      textArea.select();
+                      document.execCommand('copy');
+                      document.body.removeChild(textArea);
+                    }
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #555',
+                    color: '#d4d4d4',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.7rem',
+                    borderRadius: '3px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Copy
+                </button>
+                <button
+                  onClick={() => setDebugLogs([])}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #555',
+                    color: '#d4d4d4',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.7rem',
+                    borderRadius: '3px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div style={{ 
+              flex: 1,
+              overflowY: 'auto',
+              paddingRight: '0.5rem'
+            }}>
+              {debugLogs.length === 0 ? (
+                <div style={{ color: '#666', fontStyle: 'italic' }}>
+                  No debug messages yet. Click "Check Permissions" or try an AI action.
+                </div>
+              ) : (
+                debugLogs.map((log, i) => (
+                  <div key={i} style={{ 
+                    marginBottom: '0.25rem',
+                    padding: '0.25rem',
+                    background: i === debugLogs.length - 1 ? '#2d2d30' : 'transparent',
+                    borderRadius: '3px',
+                    wordBreak: 'break-word'
+                  }}>
+                    {log}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

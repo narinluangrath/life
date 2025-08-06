@@ -75,10 +75,17 @@ ${msg.body ? `Body: ${msg.body.substring(0, 500)}...` : ''}
 
 Please suggest 1-3 specific actions from these categories:
 1. ARCHIVE - If emails are outdated/promotional
-2. CALENDAR - If mentions meetings/events/deadlines
-3. DRIVE - If mentions documents/files to save
+2. CALENDAR - If mentions meetings/events/deadlines/payment due dates
+3. DRIVE - If mentions documents/files to save  
 4. TASK - If mentions todos/action items
 5. CUSTOM - For other automation opportunities
+
+IMPORTANT for CALENDAR events:
+- Extract ACTUAL dates from the email content (look for "due date", "payment due", "expires on", etc.)
+- For credit card payments, use the actual due date mentioned
+- Format dates as ISO strings (YYYY-MM-DDTHH:mm:ss.sssZ)
+- Set reminders 1-2 days before due dates
+- Use descriptive titles like "Chase Credit Card Payment Due" not generic "Meeting"
 
 For each suggestion, provide:
 - Type (archive/calendar/drive/task/custom)
@@ -92,17 +99,20 @@ Respond in valid JSON format:
   "suggestions": [
     {
       "type": "calendar",
-      "title": "Add meeting to calendar",
-      "description": "Email mentions a meeting on Friday at 2pm",
-      "confidence": 85,
+      "title": "Add credit card payment due date",
+      "description": "Credit card statement due date should be tracked to avoid late fees",
+      "confidence": 95,
       "params": {
-        "title": "Team Meeting",
-        "date": "2024-01-12",
-        "time": "14:00"
+        "eventTitle": "Chase Credit Card Payment Due",
+        "eventDate": "2024-01-25T09:00:00.000Z",
+        "description": "Pay Chase credit card bill - Statement balance: $1,234.56",
+        "duration": 30
       }
     }
   ]
-}`;
+}
+
+Today's date for reference: ${new Date().toISOString()}`;
   }
 
   private parseActionSuggestions(response: string): ActionSuggestion[] {

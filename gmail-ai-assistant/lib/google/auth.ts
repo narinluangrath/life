@@ -22,9 +22,10 @@ export function getAuthUrl(state?: string) {
   const oauth2Client = createOAuth2Client();
   return oauth2Client.generateAuthUrl({
     access_type: "offline",
-    scope: SCOPES,
+    scope: SCOPES.join(' '), // Explicitly join scopes with space
     state,
     prompt: "consent", // Force consent screen to get refresh token
+    include_granted_scopes: true, // Include previously granted scopes
   });
 }
 
