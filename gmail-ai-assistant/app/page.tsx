@@ -187,31 +187,21 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-        <h1>Gmail AI Assistant</h1>
-        <p>Loading...</p>
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading your emails...</p>
       </div>
     );
   }
 
   if (!authenticated) {
     return (
-      <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
-        <h1>Gmail AI Assistant</h1>
-        <p>Connect your Gmail account to get started with intelligent email management.</p>
-        <a 
-          href="/api/auth/google"
-          style={{
-            display: 'inline-block',
-            padding: '0.75rem 1.5rem',
-            fontSize: '1rem',
-            backgroundColor: '#4285f4',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '4px',
-            marginTop: '1rem',
-          }}
-        >
+      <div className="auth-container card">
+        <h1 className="auth-title">Gmail AI Assistant</h1>
+        <p className="auth-description">
+          Connect your Gmail account to get started with intelligent email management.
+        </p>
+        <a href="/api/auth/google" className="btn-primary" style={{ textDecoration: 'none' }}>
           Connect with Google
         </a>
       </div>
@@ -220,37 +210,16 @@ export default function HomePage() {
 
   if (error) {
     return (
-      <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+      <div className="container">
         <h1>Gmail AI Assistant</h1>
-        <p style={{ color: 'red' }}>Error: {error}</p>
-        <div style={{ marginTop: '1rem' }}>
-          <button 
-            onClick={checkAuthAndFetchEmails}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '1rem',
-              backgroundColor: '#4285f4',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginRight: '1rem'
-            }}
-          >
+        <div className="error-container">
+          <p>Error: {error}</p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button onClick={checkAuthAndFetchEmails} className="btn-primary">
             Retry
           </button>
-          <a
-            href="/api/auth/logout"
-            style={{
-              display: 'inline-block',
-              padding: '0.5rem 1rem',
-              fontSize: '1rem',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px',
-            }}
-          >
+          <a href="/api/auth/logout" className="btn-danger" style={{ textDecoration: 'none' }}>
             Clear Auth & Login Again
           </a>
         </div>
@@ -259,39 +228,25 @@ export default function HomePage() {
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1>Gmail AI Assistant</h1>
-        <a
-          href="/api/auth/logout"
-          style={{
-            padding: '0.5rem 1rem',
-            fontSize: '0.9rem',
-            backgroundColor: '#dc3545',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '4px',
-          }}
-        >
+    <div className="container">
+      <div className="header">
+        <div>
+          <h1>Gmail AI Assistant</h1>
+          <p style={{ marginTop: '0.25rem' }}>✅ Connected to Gmail</p>
+        </div>
+        <a href="/api/auth/logout" className="btn-danger" style={{ textDecoration: 'none' }}>
           Logout
         </a>
       </div>
-      <p>✅ Successfully connected to Gmail! Here are your recent emails:</p>
       
-      <div style={{ marginTop: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2>Recent Emails ({emails.length})</h2>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.9rem', color: '#666' }}>Group by:</span>
+      <div>
+        <div className="toolbar">
+          <h2>Inbox ({emails.length})</h2>
+          <div className="toolbar-section">
+            <span className="label">Group by</span>
             <select 
               value={groupBy} 
               onChange={(e) => setGroupBy(e.target.value as 'none' | 'sender' | 'date')}
-              style={{
-                padding: '0.25rem 0.5rem',
-                fontSize: '0.9rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}
             >
               <option value="none">None</option>
               <option value="sender">Sender</option>
@@ -301,7 +256,9 @@ export default function HomePage() {
         </div>
         
         {emails.length === 0 ? (
-          <p>No emails found in your inbox.</p>
+          <div className="empty-state">
+            <p>No emails found in your inbox.</p>
+          </div>
         ) : (
           <div style={{ marginTop: '1rem' }}>
             {groupBy === 'sender' ? (
@@ -324,84 +281,34 @@ export default function HomePage() {
                     {groupBy !== 'none' && (
                       <div 
                         onClick={() => toggleGroup(group.senderEmail)}
-                        style={{
-                          padding: '0.75rem 1rem',
-                          backgroundColor: '#e9ecef',
-                          border: '1px solid #ddd',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          marginBottom: '0.5rem'
-                        }}
+                        className="group-header"
                       >
-                        <div>
-                          <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#333' }}>
-                            {group.sender}
-                          </h3>
-                          <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
+                        <div className="group-info">
+                          <h3 className="group-title">{group.sender}</h3>
+                          <p className="group-count">
                             {group.emails.length} email{group.emails.length !== 1 ? 's' : ''}
                           </p>
                         </div>
-                        <span style={{ fontSize: '1.2rem', color: '#666' }}>
-                          {group.isExpanded ? '▼' : '▶'}
+                        <span className={`group-chevron ${group.isExpanded ? 'expanded' : ''}`}>
+                          ▶
                         </span>
                       </div>
                     )}
                     
                     {(groupBy === 'none' || group.isExpanded) && (
-                      <div style={{ marginLeft: groupBy !== 'none' ? '1rem' : '0' }}>
+                      <div className={groupBy !== 'none' ? 'group-content' : ''}>
                         {group.emails.map((email) => (
-                          <div 
-                            key={email.id} 
-                            style={{
-                              border: '1px solid #ddd',
-                              borderRadius: '8px',
-                              padding: '1rem',
-                              marginBottom: '0.5rem',
-                              backgroundColor: '#f9f9f9'
-                            }}
-                          >
-                            <div style={{ 
-                              display: 'flex', 
-                              justifyContent: 'space-between', 
-                              alignItems: 'flex-start',
-                              marginBottom: '0.5rem'
-                            }}>
+                          <div key={email.id} className="email-card">
+                            <div className="email-header">
                               <div style={{ flex: 1 }}>
-                                <h4 style={{ 
-                                  margin: '0 0 0.25rem 0', 
-                                  fontSize: '1rem',
-                                  color: '#333'
-                                }}>
-                                  {email.subject}
-                                </h4>
-                                <p style={{ 
-                                  margin: '0', 
-                                  fontSize: '0.85rem', 
-                                  color: '#666' 
-                                }}>
-                                  From: {email.sender} ({email.senderEmail})
+                                <h4 className="email-subject">{email.subject}</h4>
+                                <p className="email-sender">
+                                  {email.sender} <span style={{ color: 'var(--text-tertiary)' }}>({email.senderEmail})</span>
                                 </p>
                               </div>
-                              <span style={{ 
-                                fontSize: '0.8rem', 
-                                color: '#888',
-                                whiteSpace: 'nowrap',
-                                marginLeft: '1rem'
-                              }}>
-                                {formatDate(email.date)}
-                              </span>
+                              <span className="email-date">{formatDate(email.date)}</span>
                             </div>
-                            <p style={{ 
-                              margin: '0.5rem 0 0 0', 
-                              fontSize: '0.85rem', 
-                              color: '#555',
-                              fontStyle: 'italic'
-                            }}>
-                              {email.snippet}
-                            </p>
+                            <p className="email-snippet">{email.snippet}</p>
                           </div>
                         ))}
                       </div>
@@ -415,16 +322,8 @@ export default function HomePage() {
         
         <button 
           onClick={checkAuthAndFetchEmails}
-          style={{
-            padding: '0.5rem 1rem',
-            fontSize: '1rem',
-            backgroundColor: '#34a853',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginTop: '1rem'
-          }}
+          className="btn-success"
+          style={{ marginTop: '1.5rem' }}
         >
           Refresh Emails
         </button>
