@@ -1,12 +1,14 @@
 import { Credentials, OAuth2Client } from "google-auth-library";
 import { getGoogleOAuthConfig } from "./config";
 
-// Scopes needed for Gmail, Calendar, and Drive
+// Scopes needed for Gmail, Calendar, Drive, Docs, and Tasks
 export const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.modify",
   "https://www.googleapis.com/auth/calendar",
   "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/documents",
+  "https://www.googleapis.com/auth/tasks",
 ];
 
 export function createOAuth2Client() {

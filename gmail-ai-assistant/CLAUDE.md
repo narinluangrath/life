@@ -132,18 +132,26 @@ The application uses these OAuth2 scopes and APIs:
 - `gmail.compose` - Create draft responses
 - `calendar` - Create and manage calendar events
 - `drive.file` - Save emails and attachments to Drive
+- `documents` - Create and edit Google Docs
+- `tasks` - Create and manage Google Tasks
 
 ### Required Google Cloud APIs:
 - **Gmail API** - Email reading and management (auto-enabled)
 - **Google Calendar API** - Event creation and management (requires manual enablement)
 - **Google Drive API** - File storage and organization (requires manual enablement)
+- **Google Docs API** - Document creation and editing (requires manual enablement)
+- **Google Tasks API** - Task list management (requires manual enablement)
 
-**⚠️ Important Setup Step:**
-After OAuth configuration, you must manually enable the Google Calendar API:
+**⚠️ Important Setup Steps:**
+After OAuth configuration, you must manually enable these APIs:
 1. Visit [Google Cloud Console APIs](https://console.cloud.google.com/apis/library)
-2. Search for "Google Calendar API" and click "Enable"
+2. Search for and enable:
+   - Google Calendar API
+   - Google Drive API
+   - Google Docs API
+   - Google Tasks API
 3. Wait a few minutes for propagation
-4. Calendar actions will then work seamlessly
+4. All AI actions will then work seamlessly
 
 ## Security Notes
 
@@ -197,9 +205,10 @@ This issue has been observed with `googleapis@131.0.0` and `google-auth-library@
 **Working AI Actions:**
 - 📧 **Archive Emails** - Remove from inbox via Gmail API
 - 📅 **Calendar Events** - Create payment reminders, meetings with actual dates
-- 🏷️ **Label Management** - Apply Gmail labels for organization  
-- ✅ **Task Creation** - Generate action items from emails
-- 💾 **Drive Integration** - Save emails/attachments (API ready)
+- 💾 **Drive Storage** - Save important emails and attachments to Google Drive
+- 📄 **Docs Creation** - Generate summary documents from email threads
+- ✅ **Task Management** - Create actionable tasks with due dates in Google Tasks
+- 🏷️ **Label Management** - Apply Gmail labels for organization
 
 **Mobile Experience:**
 - Touch-friendly interface optimized for phone usage

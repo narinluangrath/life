@@ -73,19 +73,21 @@ Content: ${msg.snippet}
 ${msg.body ? `Body: ${msg.body.substring(0, 500)}...` : ''}
 `).join('\n---\n')}
 
-Please suggest 1-3 specific actions from these categories:
-1. ARCHIVE - If emails are outdated/promotional
+Please suggest 1-4 specific actions from these categories:
+1. ARCHIVE - If emails are outdated/promotional/already handled
 2. CALENDAR - If mentions meetings/events/deadlines/payment due dates
-3. DRIVE - If mentions documents/files to save  
-4. TASK - If mentions todos/action items
-5. CUSTOM - For other automation opportunities
+3. DRIVE - If contains important documents/receipts/attachments to save
+4. DOCS - If emails should be summarized in a document
+5. TASK - If mentions todos/action items/follow-ups needed
+6. CUSTOM - For other automation opportunities
 
-IMPORTANT for CALENDAR events:
-- Extract ACTUAL dates from the email content (look for "due date", "payment due", "expires on", etc.)
-- For credit card payments, use the actual due date mentioned
-- Format dates as ISO strings (YYYY-MM-DDTHH:mm:ss.sssZ)
-- Set reminders 1-2 days before due dates
-- Use descriptive titles like "Chase Credit Card Payment Due" not generic "Meeting"
+IMPORTANT guidelines:
+- CALENDAR: Extract ACTUAL dates from email content (due dates, payment due, meetings)
+  Format dates as ISO strings. Set reminders 1-2 days before.
+- DRIVE: Save important emails, receipts, statements, contracts
+- DOCS: Create summary documents for email threads or reports
+- TASKS: Create actionable tasks with due dates when mentioned
+- Be specific and actionable in titles and descriptions
 
 For each suggestion, provide:
 - Type (archive/calendar/drive/task/custom)

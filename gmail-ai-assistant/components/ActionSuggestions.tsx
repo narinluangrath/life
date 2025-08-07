@@ -56,6 +56,7 @@ export default function ActionSuggestions({
       case 'archive': return '📁';
       case 'calendar': return '📅';
       case 'drive': return '💾';
+      case 'docs': return '📄';
       case 'task': return '✅';
       case 'label': return '🏷️';
       case 'reply': return '↩️';

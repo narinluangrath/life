@@ -31,7 +31,7 @@ export interface ParsedMessage {
 
 export interface ActionSuggestion {
   id: string;
-  type: 'archive' | 'calendar' | 'drive' | 'task' | 'custom';
+  type: 'archive' | 'calendar' | 'drive' | 'docs' | 'task' | 'custom';
   title: string;
   description: string;
   confidence: number;  // 0-100
@@ -48,6 +48,7 @@ export interface EmailAnalysis {
 // Action execution result
 export interface ActionResult {
   success: boolean;
+  debug?: string[];
   message: string;
   details?: any;
   error?: string;
@@ -76,6 +77,16 @@ export interface DriveParams {
   folder?: string;
   format?: 'pdf' | 'docx' | 'txt';
   content?: string;
+}
+
+export interface GoogleCredentials {
+  web: {
+    client_id: string;
+    client_secret: string;
+    auth_uri: string;
+    token_uri: string;
+    redirect_uris: string[];
+  };
 }
 
 export interface CustomActionParams {
