@@ -67,7 +67,7 @@ npm run dev
 ## Core Components
 
 ### Main Application Page
-**File:** [`app/page.tsx`](app/page.tsx:1)
+**File:** [`app/page.tsx`](app/page.tsx)
 
 The main interface that orchestrates:
 - Authentication checking
@@ -83,7 +83,7 @@ Key features:
 - Real-time debug logging
 
 ### Type Definitions
-**File:** [`lib/types.ts`](lib/types.ts:1)
+**File:** [`lib/types.ts`](lib/types.ts)
 
 Central type definitions for:
 - `Email` - Gmail message structure
@@ -97,30 +97,30 @@ Central type definitions for:
 ### Authentication Routes
 
 #### OAuth Initiation
-**File:** [`app/api/auth/google/route.ts`](app/api/auth/google/route.ts:1)
+**File:** [`app/api/auth/google/route.ts`](app/api/auth/google/route.ts)
 - Redirects to Google OAuth consent screen
 - Requests Gmail and Google Workspace scopes
 
 #### OAuth Callback
-**File:** [`app/api/auth/google/callback/route.ts`](app/api/auth/google/callback/route.ts:1)
+**File:** [`app/api/auth/google/callback/route.ts`](app/api/auth/google/callback/route.ts)
 - Exchanges authorization code for tokens
 - Stores tokens in HTTP-only cookies
 - Redirects to main application
 
 #### Authentication Check
-**File:** [`app/api/auth/check/route.ts`](app/api/auth/check/route.ts:1)
+**File:** [`app/api/auth/check/route.ts`](app/api/auth/check/route.ts)
 - Verifies current authentication status
 - Returns user email and granted scopes
 
 #### Logout
-**File:** [`app/api/auth/logout/route.ts`](app/api/auth/logout/route.ts:1)
+**File:** [`app/api/auth/logout/route.ts`](app/api/auth/logout/route.ts)
 - Clears authentication cookies
 - Redirects to login page
 
 ### Email Operations
 
 #### Fetch Emails
-**File:** [`app/api/emails/route.ts`](app/api/emails/route.ts:1)
+**File:** [`app/api/emails/route.ts`](app/api/emails/route.ts)
 
 Direct Gmail API implementation (bypasses googleapis library):
 ```javascript
@@ -136,7 +136,7 @@ Returns formatted email data with sender, subject, date, and snippet.
 ### AI Integration
 
 #### Email Analysis
-**File:** [`app/api/claude/analyze/route.ts`](app/api/claude/analyze/route.ts:1)
+**File:** [`app/api/claude/analyze/route.ts`](app/api/claude/analyze/route.ts)
 
 Analyzes email groups and suggests actions:
 - Summarizes email content
@@ -145,7 +145,7 @@ Analyzes email groups and suggests actions:
 - Returns structured action data
 
 #### Action Execution
-**File:** [`app/api/actions/execute/route.ts`](app/api/actions/execute/route.ts:1)
+**File:** [`app/api/actions/execute/route.ts`](app/api/actions/execute/route.ts)
 
 Executes AI-suggested actions:
 - Archive emails
@@ -157,7 +157,7 @@ Executes AI-suggested actions:
 ## Authentication Flow
 
 ### OAuth2 Implementation
-**File:** [`lib/google/auth.ts`](lib/google/auth.ts:1)
+**File:** [`lib/google/auth.ts`](lib/google/auth.ts)
 
 ```javascript
 // OAuth2 client creation
@@ -185,7 +185,7 @@ Tokens stored in HTTP-only cookies:
 ## AI Integration
 
 ### Claude Service
-**File:** [`lib/claude/index.ts`](lib/claude/index.ts:1)
+**File:** [`lib/claude/index.ts`](lib/claude/index.ts)
 
 Intelligent email analysis using Claude 3.5 Sonnet:
 ```javascript
@@ -198,7 +198,7 @@ async function analyzeEmails(emails: Email[]): Promise<AIAction[]>
 ```
 
 ### Custom React Hook
-**File:** [`lib/hooks/useAIActions.ts`](lib/hooks/useAIActions.ts:1)
+**File:** [`lib/hooks/useAIActions.ts`](lib/hooks/useAIActions.ts)
 
 Manages AI analysis state:
 ```javascript
@@ -213,37 +213,37 @@ const {
 ## Google Services
 
 ### Gmail Service
-**File:** [`lib/google/gmail.ts`](lib/google/gmail.ts:1)
+**File:** [`lib/google/gmail.ts`](lib/google/gmail.ts)
 - Message fetching
 - Email archiving
 - Label management
 
 ### Calendar Integration
-**File:** [`lib/google/calendar.ts`](lib/google/calendar.ts:1)
+**File:** [`lib/google/calendar.ts`](lib/google/calendar.ts)
 - Event creation from emails
 - Meeting extraction
 - Smart scheduling
 
 ### Drive Operations
-**File:** [`lib/google/drive.ts`](lib/google/drive.ts:1)
+**File:** [`lib/google/drive.ts`](lib/google/drive.ts)
 - File saving
 - Email attachment handling
 - Content organization
 
 ### Docs Creation
-**File:** [`lib/google/docs.ts`](lib/google/docs.ts:1)
+**File:** [`lib/google/docs.ts`](lib/google/docs.ts)
 - Document generation
 - Email summaries
 - Meeting notes
 
 ### Tasks Management
-**File:** [`lib/google/tasks.ts`](lib/google/tasks.ts:1)
+**File:** [`lib/google/tasks.ts`](lib/google/tasks.ts)
 - Task creation
 - Action item tracking
 - Due date management
 
 ### Configuration
-**File:** [`lib/google/config.ts`](lib/google/config.ts:1)
+**File:** [`lib/google/config.ts`](lib/google/config.ts)
 - Credentials loading
 - Environment validation
 - Service initialization
@@ -251,7 +251,7 @@ const {
 ## Frontend Components
 
 ### Action Suggestions UI
-**File:** [`components/ActionSuggestions.tsx`](components/ActionSuggestions.tsx:1)
+**File:** [`components/ActionSuggestions.tsx`](components/ActionSuggestions.tsx)
 
 Displays AI-generated actions with:
 - Icon-based action types
@@ -260,7 +260,7 @@ Displays AI-generated actions with:
 - Success/error feedback
 
 ### Email Group Component
-**File:** [`components/EmailGroupWithActions.tsx`](components/EmailGroupWithActions.tsx:1)
+**File:** [`components/EmailGroupWithActions.tsx`](components/EmailGroupWithActions.tsx)
 
 Groups emails with:
 - Collapsible headers
@@ -286,19 +286,19 @@ tail -f dev-server.log
 ### Debug Endpoints
 
 #### Authentication Debug
-**File:** [`app/api/auth/debug/route.ts`](app/api/auth/debug/route.ts:1)
+**File:** [`app/api/auth/debug/route.ts`](app/api/auth/debug/route.ts)
 - Check current auth status
 - Verify token validity
 - Inspect granted scopes
 
 #### Gmail Test
-**File:** [`app/api/test-gmail/route.ts`](app/api/test-gmail/route.ts:1)
+**File:** [`app/api/test-gmail/route.ts`](app/api/test-gmail/route.ts)
 - Test Gmail API connectivity
 - Verify message fetching
 - Debug API responses
 
 #### AI Test
-**File:** [`app/api/test-ai/route.ts`](app/api/test-ai/route.ts:1)
+**File:** [`app/api/test-ai/route.ts`](app/api/test-ai/route.ts)
 - Test Claude integration
 - Verify prompt processing
 - Debug AI responses
@@ -321,7 +321,7 @@ fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages', {
 ```
 
 #### OAuth Scope Issues
-Ensure all required scopes are requested in [`app/api/auth/google/route.ts`](app/api/auth/google/route.ts:28):
+Ensure all required scopes are requested in [`app/api/auth/google/route.ts`](app/api/auth/google/route.ts):
 - `gmail.readonly` - Read emails
 - `gmail.modify` - Archive/label
 - `calendar` - Calendar events
@@ -330,7 +330,7 @@ Ensure all required scopes are requested in [`app/api/auth/google/route.ts`](app
 - `tasks` - Manage tasks
 
 #### Token Refresh
-Tokens auto-refresh via the OAuth2Client. Check [`lib/google/auth.ts`](lib/google/auth.ts:20) for implementation.
+Tokens auto-refresh via the OAuth2Client. Check [`lib/google/auth.ts`](lib/google/auth.ts) for implementation.
 
 ### Debug Panel
 The main page includes a debug panel showing:
@@ -344,7 +344,7 @@ Enable with the "Show Debug Info" button in the UI.
 ## Key Implementation Details
 
 ### Email Grouping Logic
-**Location:** [`app/page.tsx`](app/page.tsx:46)
+**Location:** [`app/page.tsx`](app/page.tsx)
 
 Groups emails by:
 - **None**: All emails in one list
@@ -352,7 +352,7 @@ Groups emails by:
 - **Date**: Group by day
 
 ### AI Prompt Engineering
-**Location:** [`lib/claude/index.ts`](lib/claude/index.ts:25)
+**Location:** [`lib/claude/index.ts`](lib/claude/index.ts)
 
 Structured prompts for:
 - Email summarization

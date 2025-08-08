@@ -32,4 +32,5 @@ yarn-error.log*
 # Temp files
 *.tmp
 .temp/
-tmp/
+tmp/google-cloud-sdk/
+*.tar.gz
