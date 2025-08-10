@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/lib/google/auth';
-import { GmailService } from '@/lib/google/gmail';
 
 export async function GET(request: NextRequest) {
   console.log('=== EMAILS API CALLED ===');

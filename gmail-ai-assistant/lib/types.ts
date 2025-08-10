@@ -1,9 +1,3 @@
-import { gmail_v1 } from 'googleapis';
-
-// Reuse Gmail API types
-export type GmailMessage = gmail_v1.Schema$Message;
-export type GmailLabel = gmail_v1.Schema$Label;
-
 // Our custom types for the app
 export interface EmailGroup {
   senderKey: string;  // Normalized sender for grouping
@@ -31,7 +25,7 @@ export interface ParsedMessage {
 
 export interface ActionSuggestion {
   id: string;
-  type: 'archive' | 'calendar' | 'drive' | 'docs' | 'task' | 'custom';
+  type: 'archive' | 'calendar' | 'drive' | 'docs' | 'task' | 'label' | 'reply' | 'forward' | 'delete' | 'custom';
   title: string;
   description: string;
   confidence: number;  // 0-100
@@ -54,30 +48,6 @@ export interface ActionResult {
   error?: string;
 }
 
-// Specific action parameter types
-export interface CalendarEventParams {
-  title: string;
-  date: string;
-  time?: string;
-  duration?: string;
-  description?: string;
-  location?: string;
-}
-
-export interface TaskParams {
-  title: string;
-  description?: string;
-  priority?: 'low' | 'medium' | 'high';
-  dueDate?: string;
-  project?: string;
-}
-
-export interface DriveParams {
-  filename: string;
-  folder?: string;
-  format?: 'pdf' | 'docx' | 'txt';
-  content?: string;
-}
 
 export interface GoogleCredentials {
   web: {
@@ -89,28 +59,3 @@ export interface GoogleCredentials {
   };
 }
 
-export interface CustomActionParams {
-  apiEndpoint?: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  headers?: Record<string, string>;
-  body?: any;
-}
-
-// UI state for actions
-export interface ActionUIState {
-  isAnalyzing: boolean;
-  isExecuting: boolean;
-  expandedGroups: Set<string>;
-  selectedActions: Set<string>;
-}
-
-export interface GoogleCredentials {
-  installed: {
-    client_id: string;
-    client_secret: string;
-    auth_uri: string;
-    token_uri: string;
-    auth_provider_x509_cert_url: string;
-    redirect_uris: string[];
-  };
-}
